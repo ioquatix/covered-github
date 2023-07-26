@@ -39,6 +39,28 @@ jobs:
         name: coverage-${{matrix.os}}-${{matrix.ruby}}
         path: .covered.db
   
+  annotate:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v3
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: "3.2"
+        bundler-cache: true
+    
+    - uses: actions/download-artifact@v3
+    
+    - name: Fetch main
+      run: git fetch origin $GITHUB_BASE_REF --depth=1
+    
+    - name: Annotate coverage
+      timeout-minutes: 5
+      run: |
+        bundle exec bake covered:policy:current --paths */.covered.db \; covered:git:statistics --branch origin/$GITHUB_BASE_REF covered:github:annotate
+  
   validate:
     needs: test
     runs-on: ubuntu-latest

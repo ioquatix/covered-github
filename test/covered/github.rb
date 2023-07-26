@@ -4,6 +4,7 @@
 # Copyright, 2023, by Samuel Williams.
 
 require 'covered/github/version'
+require 'covered/github/test'
 
 describe Covered::GitHub do
 	it "has a version number" do
