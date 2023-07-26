@@ -2,27 +2,28 @@
 
 # Released under the MIT License.
 # Copyright, 2023, by Samuel Williams.
-# Copyright, 2023, by Michael Adams.
-
-require 'covered/policy'
-require 'covered/git/branch_changes'
-
-def initialize(...)
-	super
-	
-	require 'set'
-	require 'rugged'
-end
 
 # Annotate the GitHub pull request with coverage information.
-# @parameter input [Hash] the input statistics.
-def annotate(input:)
-	input[:paths].each do ||
-		if modified_lines = modifications[coverage.source.path]
-			scoped_coverage = coverage.for_lines(modified_lines)
-			statistics << scoped_coverage
+# @parameter minimum [Float] The minimum required coverage in order to pass.
+# @parameter input [Covered::Statistics] the input statistics.
+def annotate(minimum: 1.0, input:)
+	input.paths.each do |path, coverage|
+		ratio = coverage.ratio
+		if ratio < minimum
+			percent = ratio.to_f.round(2)
+			puts "::error file=#{path}::Coverage ratio #{format_percent(ratio)} is less than minimum #{format_percent(minimum)}."
 		end
 	end
 	
-	return statistics
+	# Print statistics:
+	input.print($stderr)
+	
+	# Validate statistics and raise an error if they are not met:
+	input.validate!(minimum)
+end
+
+private
+
+def format_percent(ratio)
+	"#{(ratio * 100.0).round(2)}%"
 end
